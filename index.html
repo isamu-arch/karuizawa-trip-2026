@@ -213,11 +213,12 @@
       <svg class="map" id="map" viewBox="0 0 472 560" aria-label="軽井沢スポット位置関係図"></svg>
       <div class="legend">
         <span><i class="dot" style="background:var(--aji)"></i>アジト</span>
+        <span><i class="dot" style="background:#555;border-radius:2px"></i>軽井沢駅</span>
         <span><i class="dot" style="background:var(--d1)"></i>Day1</span>
         <span><i class="dot" style="background:var(--d2)"></i>Day2</span>
         <span><i class="dot" style="background:var(--d3)"></i>Day3</span>
       </div>
-      <p class="map-hint">▲北（白糸の滝）　／　▼南（軽井沢駅・IC方面）。中心にガラス工房・ツルヤ・トンボの湯が集中。</p>
+      <p class="map-hint">▲北（白糸の滝）／▼南（軽井沢駅・IC方面）。中心にガラス工房・ツルヤ・トンボの湯が集中。水色＝湯川、点線＝主要道路（おおよその位置関係）。</p>
     </div>
   </section>
 
@@ -453,6 +454,7 @@
 const spots = [
   // name, lat, lng, dayColor, labelside(L/R), labeldy
   {n:"アジト(三笠)", lat:36.3732, lng:138.6262, c:"var(--aji)", side:"R", dy:-2, big:true},
+  {n:"軽井沢駅", lat:36.3428, lng:138.6350, c:"#555", side:"R", dy:-6, station:true},
   {n:"軽井沢ガラス工房", lat:36.3311, lng:138.6082, c:"var(--d1)", side:"R", dy:0},
   {n:"ツルヤ軽井沢店", lat:36.3381, lng:138.5929, c:"var(--d1)", side:"R", dy:0},
   {n:"旧軽井沢銀座", lat:36.3575, lng:138.6344, c:"var(--d2)", side:"R", dy:0},
@@ -473,6 +475,40 @@ function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAt
 
 // 背景の方位グラデ枠
 svg.appendChild(el("rect",{x:6,y:6,width:W-12,height:H-12,rx:14,fill:"none",stroke:"rgba(38,52,44,.12)","stroke-width":1.5}));
+
+// ===== 簡易地図の背景（エリア陰影・河川・道路）=====
+// 森の陰影（北側＝山エリアを薄い緑で）
+svg.appendChild(el("path",{d:`M6,6 L${W-6},6 L${W-6},${Y(36.375)} Q${W/2},${Y(36.36)} 6,${Y(36.372)} Z`,
+  fill:"rgba(58,111,85,.06)"}));
+// エリアのゆるい陰影（円で表現）
+[[36.357,138.634,60,"rgba(44,155,144,.05)"],   // 旧軽エリア
+ [36.353,138.596,66,"rgba(44,155,144,.05)"],   // 星野エリア
+ [36.340,138.605,54,"rgba(193,154,69,.05)"]    // 中軽井沢・南
+].forEach(([la,ln,r,f])=>{
+  svg.appendChild(el("circle",{cx:X(ln),cy:Y(la),r,fill:f}));
+});
+
+// 河川（湯川）— 北から南へゆるやかに蛇行する水色ライン
+svg.appendChild(el("path",{
+  d:`M${X(138.593)},${Y(36.410)} C${X(138.596)},${Y(36.390)} ${X(138.600)},${Y(36.375)} ${X(138.604)},${Y(36.360)} S${X(138.610)},${Y(36.340)} ${X(138.613)},${Y(36.320)}`,
+  fill:"none",stroke:"rgba(90,160,200,.35)","stroke-width":2.5,"stroke-linecap":"round"}));
+
+// 主要道路① 18号バイパス（南西〜南東の横ライン）
+svg.appendChild(el("path",{
+  d:`M${X(138.585)},${Y(36.336)} L${X(138.635)},${Y(36.341)}`,
+  fill:"none",stroke:"rgba(120,110,90,.28)","stroke-width":2.5,"stroke-dasharray":"1 0"}));
+// 主要道路② 三笠通り（駅〜旧軽〜三笠の縦ライン）
+svg.appendChild(el("path",{
+  d:`M${X(138.635)},${Y(36.343)} L${X(138.634)},${Y(36.357)} L${X(138.627)},${Y(36.373)}`,
+  fill:"none",stroke:"rgba(120,110,90,.28)","stroke-width":2.5}));
+// 道路ラベル
+const roadLbl=(t,la,ln,rot)=>{
+  const e=el("text",{x:X(ln),y:Y(la),"font-size":8.5,fill:"rgba(120,110,90,.7)","font-weight":700,
+    "text-anchor":"middle","transform":`rotate(${rot} ${X(ln)} ${Y(la)})`});
+  e.textContent=t;svg.appendChild(e);
+};
+roadLbl("18号バイパス",36.3375,138.606,5);
+
 // 北↑ 南↓
 svg.appendChild(el("line",{x1:W/2,y1:18,x2:W/2,y2:H-18,stroke:"rgba(38,52,44,.10)","stroke-width":1,"stroke-dasharray":"3 5"}));
 [["▲ 北 N",24,"start"],["▼ 南 S",H-12,"start"]].forEach(([t,yy])=>{
@@ -481,9 +517,13 @@ svg.appendChild(el("line",{x1:W/2,y1:18,x2:W/2,y2:H-18,stroke:"rgba(38,52,44,.10
 
 spots.forEach(s=>{
   const cx=X(s.lng),cy=Y(s.lat);
-  // ピン
-  svg.appendChild(el("circle",{cx,cy,r:s.big?7.5:6,fill:s.c,stroke:"#fbf7ec","stroke-width":2.5}));
-  if(s.big) svg.appendChild(el("circle",{cx,cy,r:12,fill:"none",stroke:s.c,"stroke-width":1.5,opacity:.5}));
+  // マーカー：駅は四角、それ以外は丸
+  if(s.station){
+    svg.appendChild(el("rect",{x:cx-5,y:cy-5,width:10,height:10,rx:2,fill:s.c,stroke:"#fbf7ec","stroke-width":2.5}));
+  }else{
+    svg.appendChild(el("circle",{cx,cy,r:s.big?7.5:6,fill:s.c,stroke:"#fbf7ec","stroke-width":2.5}));
+    if(s.big) svg.appendChild(el("circle",{cx,cy,r:12,fill:"none",stroke:s.c,"stroke-width":1.5,opacity:.5}));
+  }
   // ラベル
   const right=s.side==="R";
   const lx=right?cx+13:cx-13;
