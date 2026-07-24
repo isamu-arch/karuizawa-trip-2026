@@ -164,7 +164,7 @@
   .res-legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
   .res-legend span{font-size:11px;}
 
-  /* ===== 固定ナビ＆目次 ===== */
+  /* ===== 固定ナビ＆MENU ===== */
   #navbar{
     position:fixed;top:0;left:0;right:0;z-index:100;
     background:rgba(28,58,44,.97);backdrop-filter:blur(8px);
@@ -250,7 +250,7 @@
 <!-- 固定ナビ -->
 <div id="navbar">
   <div class="nav-title">めたちゃんズ 軽井沢ツアー<small>2026.8.17–19</small></div>
-  <button id="menuBtn" aria-label="目次を開く"><span class="bars"><i></i><i></i><i></i></span>目次</button>
+  <button id="menuBtn" aria-label="メニューを開く"><span class="bars"><i></i><i></i><i></i></span>MENU</button>
 </div>
 <div id="tocOverlay"></div>
 <div id="tocPanel">
@@ -1069,7 +1069,7 @@ spots.forEach(s=>{
 });
 </script>
 <script>
-// ===== 固定ナビ＆目次の制御 =====
+// ===== 固定ナビ＆メニューの制御 =====
 (function(){
   const navbar  = document.getElementById('navbar');
   const menuBtn = document.getElementById('menuBtn');
